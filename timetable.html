@@ -83,7 +83,7 @@ const LittleSuite=(()=>{
     ['mono','Charcoal & linen','#b7c6bf','#252b2b',true]
   ];
   function mix(a,b,n){const x=a.match(/\w\w/g).map(v=>parseInt(v,16)),y=b.match(/\w\w/g).map(v=>parseInt(v,16));return '#'+x.map((v,i)=>Math.round(v+(y[i]-v)*n).toString(16).padStart(2,'0')).join('');}
-  const themes=Object.fromEntries(seeds.map(([id,name,accent,base,dark])=>{
+  function palette(id,name,accent,base,dark){
     const p={id,name,accent,swatch:base,dark,
       page:dark?mix(base,'#10151b',.3):mix(base,'#ffffff',.72),surface:dark?mix(base,'#ffffff',.05):'#fffefa',
       ink:dark?mix(base,'#ffffff',.9):mix(accent,'#171c20',.63),muted:dark?mix(base,'#ffffff',.63):mix(accent,'#666961',.45),
@@ -92,8 +92,16 @@ const LittleSuite=(()=>{
       sky:dark?mix(base,'#101a32',.43):mix(base,accent,.13),skyEnd:dark?mix(base,accent,.2):mix(base,'#ffe4c0',.27),
       hills:mix(base,accent,.4),hill2:mix(base,accent,.58),wood:dark?mix(base,'#ad8e76',.5):mix('#d5b394',base,.22),
       edge:dark?mix(base,'#a38b79',.34):mix('#ad856f',accent,.16),screen:mix(base,accent,.44),curtain:mix(base,accent,.34),
-      chair:mix(base,accent,.37),chairEdge:mix(base,accent,.52),light:dark?'#ffdfa1':'#fff0bf'};return [id,p];
-  }));
+      chair:mix(base,accent,.37),chairEdge:mix(base,accent,.52),light:dark?'#ffdfa1':'#fff0bf'};return p;
+  }
+  const themes=Object.assign(Object.create(null),Object.fromEntries(seeds.map(v=>[v[0],palette(...v)])));
+  const customDefaults={hue:260,saturation:42,lightness:85,accentHue:275};
+  function sanitizeCustom(v={}){const limits={hue:[0,360],saturation:[0,85],lightness:[15,96],accentHue:[0,360]};return Object.fromEntries(Object.entries(limits).map(([k,[min,max]])=>[k,Number.isFinite(+v[k])?Math.round(Math.max(min,Math.min(max,+v[k]))):customDefaults[k]]));}
+  function hslHex(h,s,l){s/=100;l/=100;const a=s*Math.min(l,1-l),f=n=>{const k=(n+h/30)%12;return Math.round(255*(l-a*Math.max(-1,Math.min(k-3,9-k,1)))).toString(16).padStart(2,'0');};return '#'+f(0)+f(8)+f(4);}
+  let customValues={...customDefaults};
+  function setCustom(values,persist=true){customValues=sanitizeCustom(values);const v=customValues,dark=v.lightness<45;themes.custom=palette('custom','My own colours',hslHex(v.accentHue,Math.min(65,v.saturation+10),dark?75:36),hslHex(v.hue,v.saturation,v.lightness),dark);if(persist)try{localStorage.setItem('little-suite.custom-colors',JSON.stringify(v));}catch{}return themes.custom;}
+  try{customValues=JSON.parse(localStorage.getItem('little-suite.custom-colors'))||customDefaults;}catch{}
+  setCustom(customValues,false);
   function apply(id){const p=themes[id]||themes.lavender,root=document.documentElement;root.dataset.theme=p.id;root.style.colorScheme=p.dark?'dark':'light';
     const vars={page:p.page,surface:p.surface,ink:p.ink,muted:p.muted,line:p.line,accent:p.accent,'accent-light':p.soft,'accent-soft':p.soft,scene:p.wall,'theme-color':p.accent};
     Object.entries(vars).forEach(([key,v])=>root.style.setProperty('--'+key,v));try{localStorage.setItem('little-suite.theme',p.id);}catch{}
@@ -103,7 +111,7 @@ const LittleSuite=(()=>{
   function current(){try{const q=new URLSearchParams(location.search).get('theme');return themes[q]?q:localStorage.getItem('little-suite.theme')||'lavender';}catch{return 'lavender';}}
   const categories=['School','Work','Home','Personal'];
   const catalog=[
-    ['plant','Leafy friend',20,202,300,1.25],['books','One more chapter',0,264,343,.85],['matcha','Matcha moment',20,610,345,.8],
+    ['pip','Pip the little sprout',0,792,338,.86],['plant','Leafy friend',20,202,300,1.25],['books','One more chapter',0,264,343,.85],['matcha','Matcha moment',20,610,345,.8],
     ['lamp','Golden glow',40,700,267,1.6],['cat','Sleepy company',60,750,347,1.15],['lights','Tiny starlights',40,115,35,1.7],
     ['flowers','Fresh flowers',40,170,310,1.15],['candle','Slow evening',25,630,345,.8],['headphones','In my own world',45,297,338,.9],
     ['teddy','Little daydreamer',65,770,335,1.2],['crystal','Pocket of magic',35,625,356,.7],['clock','Time to bloom',35,180,345,.8],
@@ -112,7 +120,7 @@ const LittleSuite=(()=>{
     ['fishbowl','A little blue',80,670,280,1.5],['camera','Keep the moment',50,620,340,.95],['bunny','Soft little friend',80,720,325,1.25],
     ['globe','Anywhere someday',90,220,280,1.4]
   ].map(([id,name,price,x,y,scale])=>({id,name,price,x,y,scale}));
-  return {themes,mix,apply,current,categories,catalog};
+  return {themes,mix,apply,current,categories,catalog,customDefaults,sanitizeCustom,setCustom,getCustom:()=>({...customValues})};
 })();
 </script>
 </head>

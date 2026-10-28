@@ -2,7 +2,7 @@
 -- own room. No public reads or anonymous writes. Coins remain personal points.
 create table if not exists public.little_desk_rooms (
   user_id uuid primary key references auth.users(id) on delete cascade,
-  room jsonb not null check (jsonb_typeof(room) = 'object' and octet_length(room::text) <= 200000),
+  room jsonb not null check (jsonb_typeof(room) = 'object' and octet_length(room::text) <= 400000),
   updated_at timestamptz not null default now()
 );
 alter table public.little_desk_rooms enable row level security;

@@ -30,12 +30,28 @@ const DeskArt = (() => {
     bunny:`<ellipse cx="50" cy="72" rx="27" ry="24" fill="#e4d5bd"/><ellipse cx="37" cy="24" rx="10" ry="24" fill="#e4d5bd"/><ellipse cx="63" cy="24" rx="10" ry="24" fill="#e4d5bd"/><circle cx="50" cy="51" r="28" fill="#f2e7d1"/><g fill="#aa8b7d"><circle cx="40" cy="49" r="3"/><circle cx="61" cy="49" r="3"/><path d="M46 58h9l-5 5z"/></g><path d="M37 6v27m26-27v27" stroke="#dfbab3" stroke-width="5" stroke-linecap="round"/>`,
     globe:`<path d="M49 71v15M29 89h40" stroke="#c09c75" stroke-width="5" stroke-linecap="round"/><circle cx="50" cy="41" r="31" fill="#b2ced3"/><path d="M31 19l10 8-3 11 12 10-4 18-13-12-8-3-3-16M60 15l-6 15 15 9 10-5" fill="#91ac88"/><path d="M25 14a36 36 0 0 0 50 54" fill="none" stroke="#c09c75" stroke-width="3"/>`
   });
-  function thumbnail(id) {return `<svg viewBox="0 0 100 100" aria-hidden="true">${drawings[id]||''}</svg>`;}
-  function scene(theme,visible,positions={}) {
+  function pipArt(p){return `<ellipse cx="50" cy="91" rx="30" ry="5" fill="${p.ink}" opacity=".08"/><path d="M50 30V13" stroke="#73976c" stroke-width="4" stroke-linecap="round"/><path d="M49 22Q27 22 31 6Q51 3 49 22M51 19Q52 1 72 6Q74 24 51 19" fill="#a3bd89"/><path d="M16 63q0-35 34-35t34 35q0 26-34 27T16 63" fill="${p.soft}" stroke="${p.accent}" stroke-width="2"/><g fill="${p.ink}"><circle cx="37" cy="59" r="3"/><circle cx="63" cy="59" r="3"/></g><path d="M45 68q5 6 10 0" stroke="${p.ink}" fill="none" stroke-width="2.5" stroke-linecap="round"/><g fill="${p.accent}" opacity=".3"><ellipse cx="29" cy="67" rx="6" ry="3"/><ellipse cx="71" cy="67" rx="6" ry="3"/></g>`;}
+  const escapeXML=value=>String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const wallpapers=[{id:'meadow',name:'Little meadow'},{id:'sunset',name:'Peach sunset'},{id:'stars',name:'Among the stars'},{id:'ocean',name:'By the sea'},{id:'checker',name:'Soft gingham'}];
+  function screenArt(screen={},p=palettes.lavender){
+    let art='';const id=screen.preset||'meadow';
+    if(screen.kind==='photo'&&screen.image&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(screen.image)&&screen.image.length<=180000)art=`<image href="${screen.image}" width="226" height="113" preserveAspectRatio="xMidYMid slice"/>`;
+    else if(screen.kind==='color')art=`<rect width="226" height="113" fill="${/^#[0-9a-f]{6}$/i.test(screen.color)?screen.color:p.screen}"/>`;
+    else if(id==='stars')art='<rect width="226" height="113" fill="#27334d"/><circle cx="166" cy="29" r="16" fill="#f7e4af"/><g fill="#fff2d4"><circle cx="24" cy="21" r="1.5"/><circle cx="77" cy="47" r="2"/><circle cx="114" cy="17" r="1.5"/><circle cx="200" cy="67" r="1"/><path d="M51 73v9m-4-4h8" stroke="#fff2d4"/></g>';
+    else if(id==='sunset')art='<rect width="226" height="113" fill="#edc1b0"/><circle cx="161" cy="43" r="27" fill="#fff0bf"/><path d="M0 87q70-46 127-5t99-4v35H0z" fill="#b89aac"/><path d="M0 104q80-37 150-7t76 0v16H0z" fill="#8f8da8"/>';
+    else if(id==='ocean')art='<rect width="226" height="113" fill="#cde5e5"/><circle cx="166" cy="27" r="17" fill="#fff2cc"/><path d="M0 66q50-12 113 0t113 0v47H0z" fill="#8cb8bd"/><path d="M0 84q70-16 136 0t90-4v33H0z" fill="#b7d4c9"/><path d="M0 100q80-15 143 0t83-3v16H0z" fill="#e2cfb0"/>';
+    else if(id==='checker'){art=`<rect width="226" height="113" fill="${p.window}"/>`;for(let x=0;x<226;x+=22)for(let y=0;y<113;y+=22)if((x/22+y/22)%2===0)art+=`<rect x="${x}" y="${y}" width="22" height="22" fill="${p.screen}" opacity=".4"/>`;}
+    else art=`<rect width="226" height="113" fill="${p.screen}"/><circle cx="166" cy="29" r="19" fill="${p.light}"/><path d="M0 91q65-59 127-10t99-6v38H0z" fill="${p.hills}"/><path d="M0 108q80-37 147-8t79-6v19H0z" fill="${p.hill2}"/>`;
+    if(screen.text)art+=`<rect y="70" width="226" height="32" fill="#1c2434" opacity=".25"/><text x="113" y="90" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="11" fill="#fff9eb">${escapeXML(screen.text.slice(0,45))}</text>`;
+    return art;
+  }
+  function screenPreview(screen,theme='lavender'){return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 113">${screenArt(screen,palettes[theme]||palettes.lavender)}</svg>`;}
+  function thumbnail(id,theme='lavender') {const p=palettes[theme]||palettes.lavender;return `<svg viewBox="0 0 100 100" aria-hidden="true">${id==='pip'?pipArt(p):drawings[id]||''}</svg>`;}
+  function scene(theme,visible,positions={},options={}) {
     const p=palettes[theme]||palettes.lavender,night=p.dark;
-    const show=(item)=>{const {id,scale}=item,pos=positions[id]||item;return `<g data-desk-item="${id}" role="button" tabindex="0" aria-label="Move ${item.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" transform="translate(${pos.x} ${pos.y}) scale(${scale})"><rect width="100" height="100" fill="transparent" pointer-events="all"/>${drawings[id]}</g>`;};
+    const show=(item)=>{const {id,scale}=item,pos=positions[id]||item;return `<g data-desk-item="${id}" role="button" tabindex="0" aria-label="Move ${item.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" transform="translate(${pos.x} ${pos.y}) scale(${scale})"><rect width="100" height="100" fill="transparent" pointer-events="all"/>${id==='pip'?pipArt(p):drawings[id]}</g>`;};
     return `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="625" viewBox="0 0 1000 625">
-      <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="${p.sky}"/><stop offset="1" stop-color="${p.skyEnd}"/></linearGradient><radialGradient id="glow"><stop stop-color="${p.light}" stop-opacity=".4"/><stop offset="1" stop-color="${p.light}" stop-opacity="0"/></radialGradient><clipPath id="window-clip"><rect x="423" y="75" width="356" height="280" rx="100"/></clipPath></defs>
+      <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="${p.sky}"/><stop offset="1" stop-color="${p.skyEnd}"/></linearGradient><radialGradient id="glow"><stop stop-color="${p.light}" stop-opacity=".4"/><stop offset="1" stop-color="${p.light}" stop-opacity="0"/></radialGradient><clipPath id="screen-clip"><rect width="226" height="113" rx="4"/></clipPath><clipPath id="window-clip"><rect x="423" y="75" width="356" height="280" rx="100"/></clipPath></defs>
       <path fill="${p.wall}" d="M0 0h1000v625H0z"/><path fill="${p.floor}" d="M0 490h1000v135H0z"/>
       <path d="M0 490h1000" stroke="${p.edge}" opacity=".13" stroke-width="3"/>
       <path d="M89 625V0M896 625V0" stroke="${p.edge}" opacity=".055" stroke-width="2"/>
@@ -44,7 +60,7 @@ const DeskArt = (() => {
       <rect x="415" y="61" width="373" height="299" rx="108" fill="${p.window}"/>
       <g clip-path="url(#window-clip)"><path d="M423 75h356v280H423z" fill="url(#sky)"/>
       <circle cx="693" cy="135" r="32" fill="${night?'#f8e8c6':'#fff4d4'}"/>
-      ${night?'<circle cx="707" cy="122" r="29" fill="#272e4d"/><g fill="#fff5de"><circle cx="464" cy="134" r="2"/><circle cx="535" cy="101" r="2"/><circle cx="628" cy="145" r="2"/><circle cx="738" cy="194" r="2"/><path d="M581 181v12m-6-6h12" stroke="#fff5de" stroke-width="2"/></g>':'<path d="M450 176q0-16 19-13q8-24 28-8q22-4 22 17H450M633 220q0-12 15-12q5-20 23-8q23-8 25 17H633" fill="#fff9ee" opacity=".7"/>'}
+      ${night?'<circle cx="707" cy="122" r="29" fill="'+p.sky+'"/><g fill="#fff5de"><circle cx="464" cy="134" r="2"/><circle cx="535" cy="101" r="2"/><circle cx="628" cy="145" r="2"/><circle cx="738" cy="194" r="2"/><path d="M581 181v12m-6-6h12" stroke="#fff5de" stroke-width="2"/></g>':'<path d="M450 176q0-16 19-13q8-24 28-8q22-4 22 17H450M633 220q0-12 15-12q5-20 23-8q23-8 25 17H633" fill="#fff9ee" opacity=".7"/>'}
       <path d="M418 309q80-86 165-34t210-18v99H418" fill="${p.hills}"/><path d="M418 328q104-55 194-12t186-17v57H418" fill="${p.hill2}"/>
       <path d="M737 281v74m-14-49 14-22 15 22m-28 18 13-22 15 22" stroke="${p.ink}" stroke-width="3" fill="none" opacity=".3"/></g>
       <path d="M600 76v279M423 237h355" stroke="${p.window}" stroke-width="9"/><rect x="403" y="351" width="397" height="14" rx="6" fill="${p.window}"/>
@@ -58,14 +74,12 @@ const DeskArt = (() => {
       <path d="M165 450h37l-14 131h-23zM810 450h36v131h-23z" fill="${p.edge}"/><path d="M201 461h607v17H201z" fill="${p.wood}"/>
       <rect x="131" y="428" width="748" height="27" rx="9" fill="${p.edge}"/><rect x="130" y="422" width="750" height="22" rx="9" fill="${p.wood}"/><path d="M159 433h689" stroke="${p.window}" stroke-width="2" opacity=".25"/>
       <ellipse cx="490" cy="418" rx="162" ry="8" fill="${p.ink}" opacity=".12"/>
-      <rect x="356" y="283" width="240" height="132" rx="9" fill="${p.ink}"/><rect x="363" y="291" width="226" height="113" rx="4" fill="${p.screen}"/>
-      <path d="M366 389q68-53 124-12t96-3v27H366z" fill="${p.window}" opacity=".22"/><circle cx="477" cy="326" r="12" fill="${p.window}" opacity=".55"/>
-      <text x="477" y="359" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="14" fill="${p.window}">one thing at a time.</text>
+      <rect x="356" y="283" width="240" height="132" rx="9" fill="${p.ink}"/><g transform="translate(363 291)" clip-path="url(#screen-clip)">${screenArt(options.screen||{text:'one thing at a time.'},p)}</g>
       <path d="M355 411h244l25 12q0 5-11 5H339q-11 0-11-5z" fill="${p.window}"/><path d="M448 412h58l5 7h-68z" fill="${p.edge}" opacity=".3"/>
       ${visible.map(id=>items.find(i=>i.id===id)).filter(Boolean).map(show).join('')}
-      <path d="M444 504q0-31 41-31h50q41 0 41 31v101H444z" fill="${p.chair}"/><path d="M458 503v93M563 504v93" stroke="${p.window}" opacity=".16" stroke-width="3"/><path d="M445 604h132v21H445z" fill="${p.chairEdge}"/>
+      ${options.chair===false?'':`<g transform="translate(-275 160) scale(.75)"><path d="M444 504q0-31 41-31h50q41 0 41 31v101H444z" fill="${p.chair}"/><path d="M458 503v93M563 504v93" stroke="${p.window}" opacity=".16" stroke-width="3"/><path d="M445 604h132v21H445z" fill="${p.chairEdge}"/></g>`}
       <path d="M895 489q-13-16-2-38q13 19 2 38M903 482q2-20 18-25q4 22-18 25" fill="#91a18b" opacity=".8"/><path d="M878 487h39l-6 33h-27z" fill="${p.edge}"/>
     </svg>`;
   }
-  return {palettes,items,thumbnail,scene};
+  return {palettes,items,thumbnail,scene,wallpapers,screenPreview};
 })();
