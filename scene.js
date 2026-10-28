@@ -33,7 +33,7 @@ const DeskArt = (() => {
   function thumbnail(id) {return `<svg viewBox="0 0 100 100" aria-hidden="true">${drawings[id]||''}</svg>`;}
   function scene(theme,visible,positions={}) {
     const p=palettes[theme]||palettes.lavender,night=p.dark;
-    const show=(item)=>{const {id,scale}=item,pos=positions[id]||item;return `<g data-desk-item="${id}" role="button" tabindex="0" aria-label="Move ${item.name}" transform="translate(${pos.x} ${pos.y}) scale(${scale})"><rect width="100" height="100" fill="transparent" pointer-events="all"/>${drawings[id]}</g>`;};
+    const show=(item)=>{const {id,scale}=item,pos=positions[id]||item;return `<g data-desk-item="${id}" role="button" tabindex="0" aria-label="Move ${item.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" transform="translate(${pos.x} ${pos.y}) scale(${scale})"><rect width="100" height="100" fill="transparent" pointer-events="all"/>${drawings[id]}</g>`;};
     return `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="625" viewBox="0 0 1000 625">
       <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="${p.sky}"/><stop offset="1" stop-color="${p.skyEnd}"/></linearGradient><radialGradient id="glow"><stop stop-color="${p.light}" stop-opacity=".4"/><stop offset="1" stop-color="${p.light}" stop-opacity="0"/></radialGradient><clipPath id="window-clip"><rect x="423" y="75" width="356" height="280" rx="100"/></clipPath></defs>
       <path fill="${p.wall}" d="M0 0h1000v625H0z"/><path fill="${p.floor}" d="M0 490h1000v135H0z"/>
